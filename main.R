@@ -1,4 +1,5 @@
-
+## Functie cu ajutorul caruia este determinata 
+## ora aparitiei urmatorului client
 lambda_fun <- function(t) {
   if(t <= 2) {
     return(2)
@@ -6,7 +7,8 @@ lambda_fun <- function(t) {
   return ((2*t)/log(t))
 }
 
-
+## Proces Poisson neomogen ce determina 
+## ora aparitiei urmatorului client
 generateTs <- function(s) {
   lambda = 9.66
   t = s
@@ -20,13 +22,8 @@ generateTs <- function(s) {
   }
 }
 
-y1 <- function() {
-  x1 = rpois(1, 7.3)
-  x2 = rpois(1, 6.2)
-  return (3 * min(x1, x2))
-}
-
-poissonRandomVar <- function(lambda) {
+## Simuleaza o variabila aleatoare de repartitie Poisson
+customRPois <- function(lambda) {
   p = 0
   mysum = 0
   while(1) {
@@ -39,26 +36,32 @@ poissonRandomVar <- function(lambda) {
   }
 }
 
+## Simuleaza timpul necesar servirii unui
+## client de catre server-ul 1
 y1 <- function() {
-  return (3*min(poissonRandomVar(7.3), poissonRandomVar(6.2))/60)
+  return (3*min(customRPois(7.3), customRPois(6.2))/60)
 }
 
+## Simuleaza timpul necesar servirii unui
+## client de catre server-ul 2
 y2 <- function() {
-  return((floor(exp(customrnorm())) + 2) / 60)
+  return((floor(exp(customRNorm(1, 2))) + 2) / 60)
 }
 
-customrnorm <- function() {
+## Simuleaza o variabila aleatoare de repartitie normala
+customRNorm <- function(sd, mean) {
   U.1 <- runif(1)
   U.2 <- runif(1)
   theta <- 2*pi*U.1
   E <- -log(U.2)
   R <- sqrt(2*E)
   X <- R*cos(theta)
-  return(X + 2)
+  return(sd*X + mean)
 }
 
+## simulates one full day
 simulateOneDay <- function() {
-  MAX_NUMBER_OF_CLIENTS_IN_QUEUE = 14
+  MAX_NUMBER_OF_CLIENTS_IN_QUEUE = 15
   
   t = generateTs(0)
   eventsList <- c(t, Inf, Inf)
@@ -69,8 +72,8 @@ simulateOneDay <- function() {
   A1 = list()
   A2 = list()
   D = list()
-  left_timestamps = list()
-  left_clients = 0
+  lost_clients_timestamps = list()
+  lost_clients = 0
   
   
   while(t < 12) {
@@ -84,8 +87,8 @@ simulateOneDay <- function() {
         systemState[[1]] = systemState[[1]] + 1
       }
       else {
-        left_clients = left_clients + 1
-        left_timestamps[[left_clients]] = next_client
+        lost_clients = lost_clients + 1
+        lost_clients_timestamps[[lost_clients]] = next_client
       }
       
       if(next_client < 12) {
@@ -94,8 +97,8 @@ simulateOneDay <- function() {
         }
         A1[[Na]] = t
         
-        output = paste("A1[", toString(Na), "]", "=", toString(A1[[Na]]), " ; t=", toString(t)) 
-        print(output)
+        #output = paste("A1[", toString(Na), "]", "=", toString(A1[[Na]]), " ; t=", toString(t)) 
+        #print(output)
       }
     }
     if(eventsList[[2]] < eventsList[[1]] & eventsList[[2]] <= eventsList[[3]]) {
@@ -113,8 +116,8 @@ simulateOneDay <- function() {
       }
       A2[[Na - systemState[[1]]]] = t
       
-      output = paste("A2[", Na - systemState[[1]], "]", "=", toString(A2[[Na - systemState[[1]]]]), " ; t=", toString(t)) 
-      print(output)
+      #output = paste("A2[", Na - systemState[[1]], "]", "=", toString(A2[[Na - systemState[[1]]]]), " ; t=", toString(t)) 
+      #print(output)
     }
     if(eventsList[[3]] < eventsList[[1]] & eventsList[[3]] < eventsList[[2]]) {
       t = eventsList[[3]]
@@ -128,91 +131,76 @@ simulateOneDay <- function() {
       }
       D[[Nd]] = t
       
-      output = paste("D[", Nd, "]", "=", toString(D[[Nd]]), " ; t=", toString(t)) 
-      print(output)
+      #output = paste("D[", Nd, "]", "=", toString(D[[Nd]]), " ; t=", toString(t)) 
+      #print(output)
     }
   }
-  print(" ------------- left!!!!")
-  print(left_timestamps)
-  print("printed left timestamps -------------")
-  return(list(A1, A2, D))
+
+  return(list(A1, A2, D, lost_clients_timestamps))
 }
 
-simulateOneDay()
-
-results = simulateOneDay()
-A1 = results[[1]]
-A2 = results[[2]]
-D = results[[3]]
-
-avgClientsPerDay <- function(noOfDays) {
-  avgClients = 0
+## Determina numarul mediu de clienti serviti pe zi si 
+## numarul mediu de clienti pierduti pe zi din cauza cozii prea mari
+avgClientsStats <- function(noOfDays) {
+  avgServedClients = 0
+  avgLostClients = 0
   for(i in 1:noOfDays) {
     day = simulateOneDay()
-    avgClients = avgClients + length(day[[3]])
+    avgServedClients = avgServedClients + length(day[[3]])
+    avgLostClients = avgLostClients + length(day[[4]])
   }
-  return(avgClients /noOfDays)
+  return(list(avgServedClients /noOfDays, avgLostClients / noOfDays))
 }
 
-system_client_durations <- list() # cat timp petrece fiecare client in sistem
-system_avg_waiting_time = 0 # timpul mediu petrecut in sistem
-
-server_one_durations <- list()
-server_one_avg_waiting_time = 0
-
-server_two_durations <- list()
-server_two_avg_waiting_time = 0
-
-for (i in 1:length(D)) {
-  print('##########')
-  system_client_durations[[i]] = D[[i]] - A1[[i]]
-  print(system_client_durations[[i]])
-  server_one_durations[[i]] = A2[[i]] - A1[[i]]
-  print(server_one_durations[[i]])
-  server_two_durations[[i]] = D[[i]] - A2[[i]]
-  print(server_two_durations[[i]])
+## Returneaza timpul minim, timpul maxim si timpul mediu de asteptare
+## pentru intregul sistem, pentru serverul 1 si pentru serverul 2
+waitingTimes <- function(results) {
+  A1 = results[[1]]
+  A2 = results[[2]]
+  D = results[[3]]
   
-  system_avg_waiting_time = system_avg_waiting_time + system_client_durations[[i]]
-  server_two_avg_waiting_time = server_two_avg_waiting_time + server_two_durations[[i]]
-  server_one_avg_waiting_time = server_one_avg_waiting_time + server_one_durations[[i]]
+  systemClientDurations <- list() # cat timp petrece fiecare client in sistem
+  systemAvgWaitingTime = 0 # timpul mediu petrecut in sistem
   
-  print('---------')
+  serverOneDurations <- list()
+  serverOneAvgWaitingTime = 0
+  
+  serverTwoDurations <- list()
+  serverTwoAvgWaitingTime = 0
+  
+  for (i in 1:length(D)) {
+    systemClientDurations[[i]] = D[[i]] - A1[[i]]
+    serverOneDurations[[i]] = A2[[i]] - A1[[i]]
+    serverTwoDurations[[i]] = D[[i]] - A2[[i]]
+    
+    systemAvgWaitingTime = systemAvgWaitingTime + systemClientDurations[[i]]
+    serverTwoAvgWaitingTime = serverTwoAvgWaitingTime + serverTwoDurations[[i]]
+    serverOneAvgWaitingTime = serverOneAvgWaitingTime + serverOneDurations[[i]]
+  }
+  
+  systemAvgWaitingTime = systemAvgWaitingTime / length(D)
+  systemMinWaitingTime = min(unlist(systemClientDurations))
+  systemMaxWaitingTime = max(unlist(systemClientDurations))
+  
+  serverOneAvgWaitingTime = serverOneAvgWaitingTime / length(D)
+  serverOneMinWaitingTime = min(unlist(serverOneDurations))
+  serverOneMaxWaitingTime = max(unlist(serverOneDurations))
+  
+  serverTwoAvgWaitingTime = serverTwoAvgWaitingTime / length(D)
+  serverTwoMinWaitingTime = min(unlist(serverTwoDurations))
+  serverTwoMaxWaitingTime = max(unlist(serverTwoDurations))
+  
+  systemStats <- list(systemAvgWaitingTime, systemMinWaitingTime, systemMaxWaitingTime)
+  serverOneStats <- list(serverOneAvgWaitingTime, serverOneMinWaitingTime, serverOneMaxWaitingTime)
+  serverTwoStats <- list(serverTwoAvgWaitingTime, serverTwoMinWaitingTime, serverTwoMaxWaitingTime)
+  
+  return (list(systemStats, serverOneStats, serverTwoStats))
 }
 
-system_avg_waiting_time = system_avg_waiting_time / length(D)
-system_min_waiting_time = min(unlist(system_client_durations))
-system_max_waiting_time = max(unlist(system_client_durations))
+results = simulateOneDay()
 
-server_one_avg_waiting_time = server_one_avg_waiting_time / length(D)
-server_one_min_waiting_time = min(unlist(server_one_durations))
-server_one_max_waiting_time = max(unlist(server_one_durations))
+waitTimes = waitingTimes(results)
+print(waitTimes)
 
-server_two_avg_waiting_time = server_two_avg_waiting_time / length(D)
-server_two_min_waiting_time = min(unlist(server_two_durations))
-server_two_max_waiting_time = max(unlist(server_two_durations))
-
-
-print("System:")
-print(system_client_durations)
-print(system_avg_waiting_time)
-print(system_min_waiting_time)
-print(system_max_waiting_time)
-
-print("Server One:")
-print(server_one_durations)
-print(server_one_avg_waiting_time)
-print(server_one_min_waiting_time)
-print(server_one_max_waiting_time)
-
-print("Server Two:")
-print(server_two_durations)
-print(server_two_avg_waiting_time)
-print(server_two_min_waiting_time)
-print(server_two_max_waiting_time)
-
-print("Average clients/day:")
-print(avgClientsPerDay(100))
-
-
-
+print(avgClientsStats(100))
 
