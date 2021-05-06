@@ -14,8 +14,9 @@ Deci, sistemul de servire a clientilor poate fi privit ca un sistem de tip coada
 - Clientii nou-veniti vor pleca daca sunt mai mult de 15 persoane in asteptare la primul server(cel ce se ocupa de reparatii)
 
 ### Obiective
-- Determinarea timpului minim, mediu si maxim petrecut de un client in atelier
-- 
+- Determinarea Timpul minim, timpul mediu si timpul maxim petrecut de clienti in atelier
+- Numarul mediu de clienti serviti intr-o zi
+- Numarul mediu de clienti pierduti intr-o zi
 
 ## Datele problemei
 ### Sosirea clientilor
@@ -98,8 +99,39 @@ Rezultatele sunt:
 
 | Functia folosita  | Media | Varianta|
 | -------------     |:-----:| :-----:|
-| `customRNorm`           | 2.08  | 1.01 |
+| `customRNorm`     | 2.08  | 1.01 |
 | `rnorm`     | 2.07   | 0.91 |
 
 ## Rezultate obtinute
 
+In continuare, sunt prezentate rezultatele obtinute in urma simularilor. 
+
+### Timpul minim, timpul mediu si timpul maxim petrecut de clienti in sistem
+
+Pentru determinarea acestori timpi, apelam intai functia `simulateOneDay()`. Aceasta intoarce urmatoarele date:
+    - o lista cu timpii la care au sosit clientii noi in sistem
+    - o lista cu timpii la care clientii au ajuns la serverul 2
+    - o lista cu timpii la care clientii au iesit din sistem
+    - o lista cu timpii la care au fost pierduti clienti
+
+Rezultatul returnat il vom transmite functiei `waitingTimes(results)`, care va extrage timpii doriti. Obtinem urmatoarele rezultate:
+
+|   | Timpul minim | Timpul mediu | Timpul maxim |
+|---|:------------:|:------------:|:------------:|
+| Sistem  | 0.35  | 2.26 |  3.87 |
+| Server 1| 0.2  | 1.97 |  3.7 |
+| Server 2| 0.05   | 0.29 |  1 |  
+
+*<b>Observatie</b>: Timpii sunt exprimati in ore. Timpii pentru serverele 1 si 2 reprezinta suma dintre timpul de asteptare si servirea efectiva.*
+
+### Numarul mediu de clienti serviti/pierduti intr-o zi
+
+Folosind functia `avgClientsStats(noOfDays)`, putem calcula numarul mediu de clienti serviti(care ies din sistem) si numarul mediu de clienti pierduti intr-o zi.  
+Functia simuleaza mai multe zile pentru indeplinirea acestui task.  
+Vom selecta numarul de zile ca fiind 365.  
+Rezultatul obtinut este:
+| Nr mediu de clienti serviti/zi | Nr mediu de clienti pierduti/zi |
+|:-----:| :-----:|
+| 34.93  | 3.56 |  
+
+*<b>Observatie</b>: Printr-o zi se intelege un program intreg de lucru, de 12 ore*
