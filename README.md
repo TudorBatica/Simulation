@@ -14,7 +14,7 @@ Deci, sistemul de servire a clientilor poate fi privit ca un sistem de tip coada
 - Clientii nou-veniti vor pleca daca sunt mai mult de 15 persoane in asteptare la primul server(cel ce se ocupa de reparatii)
 
 ### Obiective
-- Determinarea Timpul minim, timpul mediu si timpul maxim petrecut de clienti in atelier
+- Determinarea timpului minim, timpului mediu si timpului maxim petrecut de clienti in atelier
 - Numarul mediu de clienti serviti intr-o zi
 - Numarul mediu de clienti pierduti intr-o zi
 
@@ -30,8 +30,9 @@ Timpurile de servire ale serverului 1 si serverului 2 sunt date de doua variabil
 ![y1](y1.png)  
 ![y2](y2.png)  
 
-## Simularea variabilelor aleatoare 
-Inainte de a trece la implementarea efectiva a simularii atelierului, este necesara gasirea unui model teoretic pentru simularea variabilelor aleatoare de repartitii Poisson si normala. In acest scop, ne vom folosi doar de variabile aleatoare de repartitie uniforma.
+## Rezolvarea problemelor teoretice 
+Inainte de a trece la implementarea efectiva a simularii atelierului, este necesara determinarea modelelor teoretice pentru simularea anumitor componente ale sistemului.  
+Printre problemele ce necesita rezolvare matematica, se regaseste simularea variabilelor aleatoare de repartitii Poisson si normala. In acest scop, ne vom folosi doar de variabile aleatoare de repartitie uniforma.
 
 ### Simularea variabilei aleatoare de repartitie Poisson
 Aceasta variabila aleatoare este necesara pentru determinarea timpului de servire al primului server.  
@@ -175,4 +176,22 @@ Rezultatul obtinut este:
 |:-----:| :-----:|
 | 34.93  | 3.56 |  
 
-*<b>Observatie</b>: Printr-o zi se intelege un program intreg de lucru, de 12 ore*
+*<b>Observatie</b>: Printr-o zi se intelege un program intreg de lucru, de 12 ore.*
+
+### Analiza clientilor pierduti
+
+Analizand o oarecare zi simulata, observam ca atelierul pierde clienti la urmatoarele momente de timp: `10.84, 10.94, 11.01, 11.57`.  
+
+Analizand momentele plecarii primului client, pe parcursul a 365 zile, folosind functia `lostClientsStats`, reies urmatoarele date:
+
+| Cea mai devreme | Medie | Cea mai tarzie |
+|:-----:| :-----:|:-----:|
+| 6.42  | 10.29 | 11.9 |
+
+*<b>Observatie</b>: Momentele de timp sunt exprimate in numarul de ore trecute de la inceperea programului.*
+
+## Concluzii
+
+Asa cum a fost formulat si in ipoteza, timpul mediu de servire la server-ul 1 este mult mai mare comparativ cu cel al server-ului 2. Prin urmare, pentru a putea servi mai multi clienti, este necesar ca atelierul sa dubleze serverul 1.  
+
+Daca dublarea primului server nu este posibila pe toata durata zilei, se poate incerca dublarea doar in jumatatea a doua a programului de lucru, intrucat aceasta este perioada in care coada de la primul server creste considerabil si duce adesea si la pierderea clientilor.

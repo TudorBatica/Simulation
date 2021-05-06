@@ -80,7 +80,7 @@ simulateOneDay <- function() {
       t = eventsList[[1]]
       next_client = generateTs(t)
       eventsList[[1]] = next_client
-      
+      if(next_client < 12) {
       if(systemState[[1]] < MAX_NUMBER_OF_CLIENTS_IN_QUEUE) {
         Na = Na + 1
         systemState[[1]] = systemState[[1]] + 1
@@ -90,7 +90,6 @@ simulateOneDay <- function() {
         lost_clients_timestamps[[lost_clients]] = next_client
       }
       
-      if(next_client < 12) {
         if(systemState[[1]] == 1) {
           eventsList[[2]] = t + y1()
         }
@@ -196,9 +195,45 @@ waitingTimes <- function(results) {
   return (list(systemStats, serverOneStats, serverTwoStats))
 }
 
+## Analizeaza clientii pierduti pe parcursul a mai multe zile
+lostClientsStats <- function(noOfDays) {
+  earliestFirstLoss = 13
+  latestFirstLoss = 0
+  avgFirstLoss = 0
+  daysWithLosses = 0
+  for(i in 1:noOfDays) {
+    day = simulateOneDay()
+    if(length(day[[4]]) < 1) {
+      next
+    }
+    firstLoss = day[[4]][[1]]
+    if(firstLoss < earliestFirstLoss) {
+      earliestFirstLoss = firstLoss
+    }
+    if(firstLoss > latestFirstLoss) {
+      latestFirstLoss = firstLoss
+    }
+    avgFirstLoss = avgFirstLoss + firstLoss
+    daysWithLosses = daysWithLosses + 1
+  }
+  if(daysWithLosses > 0) {
+    avgFirstLoss = avgFirstLoss / daysWithLosses
+  }
+  return(list(earliestFirstLoss, latestFirstLoss, avgFirstLoss))
+}
+print(lostClientsStats(365))
+
 results = simulateOneDay()
+print("Results")
+print(results)
+print("Lost")
+lost = results[[4]]
+print(lost)
+print("Length")
+print(length(lost))
 
-waitTimes = waitingTimes(results)
-print(waitTimes)
 
-print(avgClientsStats(100))
+#waitTimes = waitingTimes(results)
+#print(waitTimes)
+
+print(avgClientsStats(365))
