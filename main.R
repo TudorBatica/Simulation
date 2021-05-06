@@ -1,5 +1,4 @@
-## Functie cu ajutorul caruia este determinata 
-## ora aparitiei urmatorului client
+## Functia de intensitate lambda
 lambda_fun <- function(t) {
   if(t <= 2) {
     return(2)
@@ -203,4 +202,3 @@ waitTimes = waitingTimes(results)
 print(waitTimes)
 
 print(avgClientsStats(100))
-

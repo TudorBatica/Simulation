@@ -10,7 +10,7 @@ Deci, sistemul de servire a clientilor poate fi privit ca un sistem de tip coada
 - La finalul programului, atelierul nu mai accepta clienti noi in sistem
 - Ambele servere sunt active pe intregul program si nu iau pauze
 - Este de asteptat ca repararea unei masini sa dureze mai mult decat curatarea acesteia
-- Majoritatea clientilor prefera sa vina dupa ce pleaca de la serviciu, deci atelierul se aglomereaza spre terminarea programului
+- De obicei, primele doua ore din program sunt cele mai libere, iar atelierul se aglomereaza spre terminarea programului
 - Clientii nou-veniti vor pleca daca sunt mai mult de 15 persoane in asteptare la primul server(cel ce se ocupa de reparatii)
 
 ### Obiective
@@ -95,12 +95,53 @@ Pentru testare, generam 100 de observatii folosind `customRNorm` cu media 2 si d
 Rezultatele sunt:
 
 ![rNorm](Rplot02.png)  
-![customRNorm](Rplot03.png)
+![customRNorm](Rplot04.png)
 
 | Functia folosita  | Media | Varianta|
 | -------------     |:-----:| :-----:|
 | `customRNorm`     | 2.08  | 1.01 |
 | `rnorm`     | 2.07   | 0.91 |
+
+### Simularea sosirii clientilor
+Asa cum este mentionat in sectiunea [Datele problemei](#datele-problemei), sosirea clientilor se face dupa un proces Poisson neomogen, ce modeleaza ipoteza ca primele doua ore sunt adesea cele mai libere, iar atelierul se aglomereaza spre sfarsitul programului.  
+In implementare, simularea sosirii clientilor se efectueaza folosind urmatoarele doua functii:  
+
+```r
+## Functia de intensitate lambda
+lambda_fun <- function(t) {
+  if(t <= 2) {
+    return(2)
+  }
+  return ((2*t)/log(t))
+}
+
+## Proces Poisson neomogen ce determina 
+## ora aparitiei urmatorului client
+generateTs <- function(s) {
+  lambda = 9.66
+  t = s
+  while (1) {
+    u1 = runif(1)
+    u2 = runif(1)
+    t = t - log2(u1)/lambda
+    if(u2 <= lambda_fun(t) / lambda) {
+      return(t)
+    }
+  }
+}
+```
+Observam ca, in implementarea functiei `generateTs`, este folosit un parametru `lambda = 9.66`.  
+Aceasta este o constanta ce este mai mare decat functia de intensitate intr-un moment de timp t, pentru orice t intre 0 si 12. 
+
+Analizand graficul functiei de intensitate(figura de mai jos), se observa ca valoarea maxima este in `t = 12`. 
+  
+![lambda(t)](lambda_fun_plot.png)
+
+Cum `lambda(12) = 24/ln(12) = 9.6583`, putem alege parametrul `lambda = 9.66`.
+
+Folosind functia `generateTs` pentru generarea tuturor momentelor de timp la care sosesc clienti noi intr-o zi, obtinem:  
+
+![sosire](sosite.png)
 
 ## Rezultate obtinute
 
@@ -108,13 +149,13 @@ In continuare, sunt prezentate rezultatele obtinute in urma simularilor.
 
 ### Timpul minim, timpul mediu si timpul maxim petrecut de clienti in sistem
 
-Pentru determinarea acestori timpi, apelam intai functia `simulateOneDay()`. Aceasta intoarce urmatoarele date:
-    - o lista cu timpii la care au sosit clientii noi in sistem
-    - o lista cu timpii la care clientii au ajuns la serverul 2
-    - o lista cu timpii la care clientii au iesit din sistem
-    - o lista cu timpii la care au fost pierduti clienti
+Pentru determinarea acestori timpi, apelam intai functia `simulateOneDay`. Aceasta intoarce urmatoarele date:
+- momentele de timp la care au sosit clientii noi in sistem
+- momentele de timp la care clientii au ajuns la serverul 2
+- momentele de timp la care clientii au iesit din sistem
+- momentele de timp la care au fost pierduti clienti
 
-Rezultatul returnat il vom transmite functiei `waitingTimes(results)`, care va extrage timpii doriti. Obtinem urmatoarele rezultate:
+Rezultatul returnat il vom transmite functiei `waitingTimes`, care va extrage timpii doriti. Obtinem urmatoarele rezultate:
 
 |   | Timpul minim | Timpul mediu | Timpul maxim |
 |---|:------------:|:------------:|:------------:|
