@@ -13,6 +13,10 @@ Deci, sistemul de servire a clientilor poate fi privit ca un sistem de tip coada
 - Majoritatea clientilor prefera sa vina dupa ce pleaca de la serviciu, deci atelierul se aglomereaza spre terminarea programului
 - Clientii nou-veniti vor pleca daca sunt mai mult de 15 persoane in asteptare la primul server(cel ce se ocupa de reparatii)
 
+### Obiective
+- Determinarea timpului minim, mediu si maxim petrecut de un client in atelier
+- 
+
 ## Datele problemei
 ### Sosirea clientilor
 Clientii noi sosesc conform unui proces Poisson neomogen cu functia de intensitate  
@@ -20,12 +24,82 @@ Clientii noi sosesc conform unui proces Poisson neomogen cu functia de intensita
 ![lambda](lambda_fun.png)  
   
 ### Timpul de servire
-Timpurile de servire ale serverului 1 si serverului 2 sunt date de doua variabile aleatoare Y1, respectiv Y2. Cele doua variabile aleatoare au asociate urmatoarele functii de repartitie:  
+Timpurile de servire ale serverului 1 si serverului 2 sunt date de doua variabile aleatoare Y1, respectiv Y2. Cele doua variabile aleatoare au asociate urmatoarele functii de repartitie: 
+   
 ![y1](y1.png)  
 ![y2](y2.png)  
 
 ## Simularea variabilelor aleatoare 
-Inainte de a trece la implementarea efectiva a simularii atelierului, este necesara gasirea unui model teoretic pentru simularea variabilelor aleatoare de repartitii Poisson si Normala. In acest scop, ne vom folosi doar de variabile aleatoare de repartitie uniforma.
+Inainte de a trece la implementarea efectiva a simularii atelierului, este necesara gasirea unui model teoretic pentru simularea variabilelor aleatoare de repartitii Poisson si normala. In acest scop, ne vom folosi doar de variabile aleatoare de repartitie uniforma.
 
-### Simularea variabilei aleatoare de repartiei Poisson
+### Simularea variabilei aleatoare de repartitie Poisson
 Aceasta variabila aleatoare este necesara pentru determinarea timpului de servire al primului server.  
+
+Pentru generarea acesteia, ne folosim de faptul ca o variabila aleatoare Poisson de parametru lambda este data de numarul de evenimente secventiale care au loc in timp lambda, unde perioadele temporale dintre evenimente sunt variabile aleatoare exponentiale de rata unitara.  
+  
+Matematic, acest lucru se transcrie astfel:  
+  
+![poisson](poisson.png) 
+
+Implementand modelul matematic in limbajul R, obtinem urmatoarea functie: 
+```r
+customRPois <- function(lambda) {
+  p = 0
+  mysum = 0
+  while(1) {
+    unif = runif(1)
+    mysum = mysum + log(1 - unif)
+    if(mysum * -1 >= lambda) {
+      return(p)
+    }
+    p = p + 1
+  }
+}
+```   
+   
+Generand 100 de observatii folosind `customRPois(lambda = 7.3)` si 100 de observatii folosind functia din R `rpois(lambda = 7.3)`, obtinem urmatoarele repartitii:  
+   
+![customRPois](Rplot.png)  
+![RPois](Rplot01.png)
+
+De asemenea, analizand media si varianta, observam urmatoarele:  
+| Functia folosita  | Media | Varianta|
+| -------------     |:-----:| :-----:|
+| `rpois`           | 7.17  | 8.44 |
+| `customRPois`     | 7.5   | 8.47 |
+
+
+### Simularea variabilei aleatoare de repartitie normala
+Aceasta variabila aleatoare este necesara pentru determinarea timpului de servire al celui de al doilea server. 
+  
+Pentru generarea acesteia, ne folosim de algoritmul Box Muller. Cu ajutorul acesteia, putem simula o variabila aleatoare de repartie normala, cu media 0 si deviatia standard 1.
+
+![normala](normala.png) 
+
+Implementarea corespunzatoare in limbajul R:
+```r
+customRNorm <- function(sd, mean) {
+  U.1 <- runif(1)
+  U.2 <- runif(1)
+  theta <- 2*pi*U.1
+  E <- -log(U.2)
+  R <- sqrt(2*E)
+  X <- R*cos(theta)
+  return(sd*X + mean)
+}
+```
+
+Pentru testare, generam 100 de observatii folosind `customRNorm` cu media 2 si deviatia standard 1 si 100 de observatii, cu aceeasi medie si varianta, folosind functia din R `rnorm`.
+
+Rezultatele sunt:
+
+![rNorm](Rplot02.png)  
+![customRNorm](Rplot03.png)
+
+| Functia folosita  | Media | Varianta|
+| -------------     |:-----:| :-----:|
+| `customRNorm`           | 2.08  | 1.01 |
+| `rnorm`     | 2.07   | 0.91 |
+
+## Rezultate obtinute
+
