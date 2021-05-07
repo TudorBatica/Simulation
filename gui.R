@@ -3,6 +3,8 @@ source("main.R")
 
 library(shiny)
 
+## functie care numara in vectorul a cate ore au partea intreaga data
+## in parametrul hour
 
 count <- function(a, hour) {
   x <- 0
@@ -15,6 +17,10 @@ count <- function(a, hour) {
   
   return(x)
 }
+
+## functie care returneaza un vector cu 4 valori, reprezentand pt fiecare
+## vector din lista de vectori, numarul de ore care au partea intreaga data
+## in parametrul hour
 
 countTheTimestamps <- function(lista, hour) {
   
@@ -43,7 +49,11 @@ countTheTimestamps <- function(lista, hour) {
 ui <- fluidPage(
   sliderInput(inputId = "slider", label = "Choose a number", min = 1, max = 12,
               value = 5),
-  plotOutput(outputId = "plot")
+  plotOutput(outputId = "plot"),
+  textInput(inputId = "text", label = "Choose the number of days"),
+  actionButton(inputId = "button", label = "See the results"),
+  verbatimTextOutput(outputId = "avgClientsServed"),
+  verbatimTextOutput(outputId = "avgClientsLost")
 )
 
 server <- function(input, output) {
@@ -54,6 +64,18 @@ server <- function(input, output) {
                        value = countTheTimestamps(lista, input$slider))
     
     barplot(height = data$value, names = data$name)
+  })
+  
+  observeEvent(input$button, {
+    averageList <- avgClientsStats(as.integer(input$text))
+    
+    output$avgClientsServed <- renderText({
+      averageList[[1]]
+    })
+  
+    output$avgClientsLost <- renderText({
+      averageList[[2]]
+    })
   })
 }
 
